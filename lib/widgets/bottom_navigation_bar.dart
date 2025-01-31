@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:tripaz_app/views/home_screen.dart';
-import 'package:tripaz_app/views/notification_screen.dart';
-import 'package:tripaz_app/views/profile_screen.dart';
-import 'package:tripaz_app/views/wish_list_screen.dart';
+import '../views/home_screen.dart';
+import '../views/notification_screen.dart';
+import '../views/profile_screen.dart';
+import '../views/wish_list_screen.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -12,13 +12,13 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int myCurrentIndex = 0;
-  late final List<Widget> screens;
+  int _selectedIndex = 0;
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-    screens = [
+    _screens = [
       const HomeScreen(),
       const WishListScreen(),
       const NotificationScreen(),
@@ -28,43 +28,54 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   void _onItemTapped(int index) {
     setState(() {
-      myCurrentIndex = index;
+      _selectedIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: screens[myCurrentIndex],
-      bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: Colors.white, // Burada istediğiniz rengi belirleyin.
-        ),
-        child: BottomNavigationBar(
-          elevation: 0,
-          selectedItemColor: Color(0xFF0FA3E2),
-          unselectedItemColor: Color.fromARGB(64, 0, 0, 0),
-          currentIndex: myCurrentIndex,
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(
-              label: "Home",
-              icon: Icon(Icons.home),
+      body: Row(
+        children: [
+          // Web için yan navigasyon menüsü
+          NavigationRail(
+            extended: MediaQuery.of(context).size.width > 800,
+            minExtendedWidth: 200,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onItemTapped,
+            leading: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Image.asset(
+                'assets/logo.png',
+                height: 40,
+              ),
             ),
-            BottomNavigationBarItem(
-              label: "Wishlist",
-              icon: Icon(Icons.favorite),
-            ),
-            BottomNavigationBarItem(
-              label: "Notifications",
-              icon: Icon(Icons.notifications),
-            ),
-            BottomNavigationBarItem(
-              label: "Profile",
-              icon: Icon(Icons.person),
-            ),
-          ],
-        ),
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.home),
+                label: Text('Ana Sayfa'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.favorite),
+                label: Text('İstek Listesi'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.notifications),
+                label: Text('Bildirimler'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.person),
+                label: Text('Profil'),
+              ),
+            ],
+          ),
+          // Dikey çizgi ayırıcı
+          const VerticalDivider(thickness: 1, width: 1),
+          // Seçili ekranın içeriği
+          Expanded(
+            child: _screens[_selectedIndex],
+          ),
+        ],
       ),
     );
   }

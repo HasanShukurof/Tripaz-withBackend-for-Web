@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tripaz_app/models/detail_tour_model.dart';
-import 'package:tripaz_app/repositories/main_repository.dart';
-import 'package:tripaz_app/services/main_api_service.dart';
-import 'package:tripaz_app/viewmodels/detail_tour_view_model.dart';
-import 'package:tripaz_app/views/detail_booking_screen.dart';
-import 'package:tripaz_app/views/full_screen_image.dart';
 import 'dart:convert';
+
+import '../models/detail_tour_model.dart';
+import '../repositories/main_repository.dart';
+import '../services/main_api_service.dart';
+import '../viewmodels/detail_tour_view_model.dart';
+import 'detail_booking_screen.dart';
+import 'full_screen_image.dart';
 
 class DetailTourScreen extends StatefulWidget {
   final int tourId;

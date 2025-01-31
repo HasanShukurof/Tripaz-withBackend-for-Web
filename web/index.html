@@ -29,10 +29,33 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>tripaz_app</title>
+  <title>Tripaz App</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- CORS ve güvenlik ayarları -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: http://localhost:5000;
+    connect-src * 'self' http://localhost:5000 ws: wss:;
+    style-src * 'self' 'unsafe-inline';
+    img-src * 'self' data: https:;
+    font-src * 'self' data:;
+  ">
+
+  <script>
+    var serviceWorkerVersion = '{{flutter_service_worker_version}}';
+  </script>
+  <script src="flutter.js" defer></script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function() {
+      window.flutterWebRenderer = "html";
+      _flutter.loader.load({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        }
+      });
+    });
+  </script>
 </body>
 </html>

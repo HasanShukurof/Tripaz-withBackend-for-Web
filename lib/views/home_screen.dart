@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tripaz_app/viewmodels/home_view_model.dart';
 import '../models/tour_model.dart';
+import '../viewmodels/home_view_model.dart';
 import '../widgets/tour_card_homescreen.dart';
 
 class HomeScreen extends StatefulWidget {

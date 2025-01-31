@@ -10,54 +10,69 @@ import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart'; // CarTypeModel import edildi
 
 class MainApiService {
-  final Dio _dio = Dio();
+  final Dio _dio;
+  
+  MainApiService() : _dio = Dio(BaseOptions(
+    baseUrl: 'http://localhost:5000', // Backend'in çalıştığı gerçek URL
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    validateStatus: (status) => status! < 500,
+  ));
 
-  Future<UserLoginModel> login(String username, String password) async {
+  Future<UserLoginModel> login(String email, String password) async {
     try {
-      print("Login attempt - Email: $username");
-
-      // API'nin beklediği formatta request body
-      Map<String, dynamic> requestBody = {
-        "Email": username, // "email" yerine "Email"
-        "Password": password, // "password" yerine "Password"
-      };
-
-      print("Login request body: $requestBody");
-
-      final response = await _dio.post(
-        'https://tripaz.az/api/Authentication/login',
-        data: requestBody,
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-          validateStatus: (status) => true,
-        ),
+      print('Login attempt with email: $email');
+      
+      // CORS sorununu önlemek için options ekleyelim
+      final options = Options(
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Origin, Content-Type',
+        },
       );
 
-      print("Login response status: ${response.statusCode}");
-      print("Login response data: ${response.data}");
+      final response = await _dio.post(
+        '/api/auth/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
+        options: options,
+      );
+
+      print('Login response status: ${response.statusCode}');
+      print('Login response data: ${response.data}');
 
       if (response.statusCode == 200) {
-        String token = response.data['accessToken'];
+        final token = response.data['accessToken'];
         await saveToken(token);
-        print("Login successful - Token saved");
         return UserLoginModel.fromJson(response.data);
       } else {
-        final errorMessage = response.data['errors']?['Email']?.first ??
-            response.data['message'] ??
-            'Login failed';
-        throw Exception(errorMessage);
+        throw Exception(response.data['message'] ?? 'Giriş başarısız');
       }
     } catch (e) {
-      print("Login error: ${e.toString()}");
+      print('Login error: $e');
+      if (e is DioException) {
+        switch (e.type) {
+          case DioExceptionType.connectionError:
+            throw Exception('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.');
+          case DioExceptionType.badResponse:
+            throw Exception(e.response?.data['message'] ?? 'Giriş başarısız');
+          default:
+            throw Exception('Bir hata oluştu. Lütfen tekrar deneyin.');
+        }
+      }
       rethrow;
     }
   }
 
   Future<List<TourModel>> fetchTours(String token) async {
     final response = await _dio.get(
-      'https://tripaz.az/api/Tour/tours',
+      '/api/Tour/tours',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       }),
     );
@@ -75,9 +90,8 @@ class MainApiService {
 
   Future<TourModel> fetchTour(int tourId, String token) async {
     final response = await _dio.get(
-      'https://tripaz.az/api/Tour/tours/$tourId',
+      '/api/Tour/tours/$tourId',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       }),
     );
@@ -94,9 +108,8 @@ class MainApiService {
   Future<DetailBookingModel> fetchDetailBooking(
       int tourId, String token) async {
     final response = await _dio.get(
-      'https://tripaz.az/api/Tour/tours/$tourId',
+      '/api/Tour/tours/$tourId',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       }),
     );
@@ -115,9 +128,8 @@ class MainApiService {
 
   Future<List<CarTypeModel>> fetchCarTypes(int tourId, String token) async {
     final response = await _dio.get(
-      'https://tripaz.az/api/Tour/cars/$tourId',
+      '/api/Tour/cars/$tourId',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
         'accept': 'text/plain',
       }),
@@ -142,7 +154,7 @@ class MainApiService {
 
   Future<DetailTourModel> fetchTourDetails(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.az/api/Tour/$tourId',
+      '/api/Tour/$tourId',
       options: Options(headers: {
         'accept': 'text/plain',
         'Authorization': 'Bearer $token',
@@ -160,7 +172,7 @@ class MainApiService {
 
   Future<UserModel> fetchUser(String token) async {
     final response = await _dio.get(
-      'https://tripaz.az/api/Users/user',
+      '/api/Users/user',
       options: Options(headers: {
         'accept': 'text/plain',
         'Authorization': 'Bearer $token',
@@ -186,7 +198,7 @@ class MainApiService {
     });
 
     final response = await _dio.post(
-      'https://tripaz.az/api/Users/upload-profile-image',
+      '/api/Users/upload-profile-image',
       data: formData,
       options: Options(headers: {
         'Authorization': 'Bearer $token',
@@ -202,15 +214,14 @@ class MainApiService {
   }
 
   Future<void> saveToken(String token) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', token);
   }
 
   Future<void> addTourToWishlist(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.az/api/Tour/wishlist/$tourId',
+      '/api/Tour/wishlist/$tourId',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       }),
     );
@@ -225,9 +236,8 @@ class MainApiService {
 
   Future<void> removeTourFromWishlist(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.az/api/Tour/wishlist/$tourId',
+      '/api/Tour/wishlist/$tourId',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       }),
     );
@@ -242,9 +252,8 @@ class MainApiService {
 
   Future<List<WishlistTourModel>> fetchWishlistTours(String token) async {
     final response = await _dio.get(
-      'https://tripaz.az/api/Tour/wishlist',
+      '/api/Tour/wishlist',
       options: Options(headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       }),
     );
@@ -270,7 +279,7 @@ class MainApiService {
       print("Registration attempt - Username: $username, Email: $email");
 
       final response = await _dio.post(
-        'https://tripaz.az/api/Authentication/register',
+        '/api/Authentication/register',
         data: {
           'username': username,
           'email': email,

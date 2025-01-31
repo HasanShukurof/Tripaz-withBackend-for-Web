@@ -3,34 +3,31 @@ import '../models/user_login_model.dart';
 import '../repositories/main_repository.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  final MainRepository _repo; // Bağımlılık
-  bool isLoading = false; // Yükleme durumu
-  String? errorMessage; // Hata mesajı
+  final MainRepository _mainRepository;
+  bool _isLoading = false;
+  String? _errorMessage;
+  UserLoginModel? _user;
 
-  // Constructor: AuthRepository zorunlu olarak sağlanmalı
-  LoginViewModel(this._repo);
+  LoginViewModel(this._mainRepository);
 
-  // Kullanıcı giriş işlemi
-  Future<UserLoginModel?> login(String username, String password) async {
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  UserLoginModel? get user => _user;
+
+  Future<UserLoginModel?> login(String email, String password) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      isLoading = true;
-      errorMessage = null;
-      notifyListeners(); // UI'yi bilgilendir
-
-      // AuthRepository üzerinden login işlemi
-      final user = await _repo.login(username, password);
-
-      isLoading = false;
-      notifyListeners();
-
-      return user; // Başarılıysa kullanıcı modelini döndür
+      _user = await _mainRepository.login(email, password);
+      return _user;
     } catch (e) {
-      // Hata durumu
-      isLoading = false;
-      errorMessage = e.toString();
-      notifyListeners();
-
+      _errorMessage = e.toString();
       return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -40,10 +37,10 @@ class LoginViewModel extends ChangeNotifier {
     required String password,
   }) async {
     try {
-      isLoading = true;
+      _isLoading = true;
       notifyListeners();
 
-      await _repo.register(
+      await _mainRepository.register(
         username: username,
         email: email,
         password: password,
@@ -51,10 +48,10 @@ class LoginViewModel extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      errorMessage = e.toString();
+      _errorMessage = e.toString();
       return false;
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }

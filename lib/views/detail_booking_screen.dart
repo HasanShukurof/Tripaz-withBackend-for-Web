@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
-import 'package:tripaz_app/viewmodels/detail_booking_view_model.dart';
-import 'package:tripaz_app/views/confirm_booking_screen.dart';
 
 import '../models/car_type_model.dart';
+import '../viewmodels/detail_booking_view_model.dart';
+import 'confirm_booking_screen.dart';
 
 class DetailBookingScreen extends StatefulWidget {
   final int tourId;
